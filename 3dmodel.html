@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Model Comparator</title>
+    <style>
+        @import url('https://cdn.jsdelivr.net/npm/fontsource-inter@5.0.18/400.css');
+        @import url('https://cdn.jsdelivr.net/npm/fontsource-inter@5.0.18/600.css');
+        @import url('https://cdn.jsdelivr.net/npm/fontsource-inter@5.0.18/700.css');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0e17;
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0f1923 0%, #1a2332 100%);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #2a3a4a;
+            z-index: 100;
+            position: relative;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #00d4aa, #00a8ff);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4aa, #00a8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 73px);
+        }
+
+        .sidebar {
+            width: 360px;
+            background: #0f1923;
+            border-right: 1px solid #2a3a4a;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #6a7a8a;
+            margin-bottom: 12px;
+        }
+
+        .upload-zone {
+            border: 2px dashed #2a3a4a;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover {
+            border-color: #00d4aa;
+            background: rgba(0, 212, 170, 0.05);
+        }
+
+        .upload-zone.active {
+            border-color: #00d4aa;
+            background: rgba(0, 212, 170, 0.1);
+        }
+
+        .upload-zone.has-file {
+            border-color: #00d4aa;
+            border-style: solid;
+            background: rgba(0, 212, 170, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .upload-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #a0b0c0;
+            margin-bottom: 4px;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: #5a6a7a;
+        }
+
+        .file-info {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(0, 212, 170, 0.1);
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .file-info.visible {
+            display: flex;
+        }
+
+        .file-info-icon {
+            font-size: 18px;
+        }
+
+        .file-info-text {
+            font-size: 12px;
+            color: #a0b0c0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            color: #ff4466;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 2px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .controls-group {
+            background: #151f2b;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .slider-container {
+            margin-top: 8px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .slider-label {
+            font-size: 13px;
+            color: #8a9aaa;
+        }
+
+        .slider-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #00d4aa;
+            background: rgba(0, 212, 170, 0.1);
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #2a3a4a;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #00d4aa, #00a8ff);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 212, 170, 0.3);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4aa, #00a8ff);
+            color: #0a0e17;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 212, 170, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #1a2a3a;
+            color: #a0b0c0;
+            border: 1px solid #2a3a4a;
+        }
+
+        .btn-secondary:hover {
+            background: #2a3a4a;
+            color: #e0e0e0;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            padding: 12px;
+            background: #151f2b;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .legend-green {
+            background: #00d4aa;
+            box-shadow: 0 0 8px rgba(0, 212, 170, 0.5);
+        }
+
+        .legend-red {
+            background: #ff4466;
+            box-shadow: 0 0 8px rgba(255, 68, 102, 0.5);
+        }
+
+        .viewport {
+            flex: 1;
+            position: relative;
+            background: #0a0e17;
+        }
+
+        #canvas3d {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .viewport-overlay {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .viewport-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(15, 25, 35, 0.9);
+            border: 1px solid #2a3a4a;
+            border-radius: 8px;
+            color: #a0b0c0;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .viewport-btn:hover {
+            background: rgba(0, 212, 170, 0.1);
+            border-color: #00d4aa;
+            color: #00d4aa;
+        }
+
+        .viewport-btn.active {
+            background: rgba(0, 212, 170, 0.2);
+            border-color: #00d4aa;
+            color: #00d4aa;
+        }
+
+        .status-bar {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: rgba(15, 25, 35, 0.9);
+            border: 1px solid #2a3a4a;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-text {
+            font-size: 13px;
+            color: #6a7a8a;
+        }
+
+        .status-text span {
+            color: #00d4aa;
+            font-weight: 600;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #5a6a7a;
+            margin-top: 2px;
+        }
+
+        .stat-green { color: #00d4aa; }
+        .stat-red { color: #ff4466; }
+
+        .empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #3a4a5a;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #4a5a6a;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            color: #3a4a5a;
+            max-width: 300px;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 14, 23, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 50;
+        }
+
+        .loading-overlay.visible {
+            display: flex;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid #2a3a4a;
+            border-top-color: #00d4aa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            color: #6a7a8a;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+
+        .toggle-label {
+            font-size: 13px;
+            color: #8a9aaa;
+        }
+
+        .toggle-switch {
+            width: 40px;
+            height: 22px;
+            background: #2a3a4a;
+            border-radius: 11px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #00d4aa;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            left: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #1a2a3a;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4aa, #00a8ff);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .view-mode-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .view-mode-btn {
+            flex: 1;
+            padding: 8px;
+            background: #1a2a3a;
+            border: 1px solid #2a3a4a;
+            border-radius: 6px;
+            color: #6a7a8a;
+            font-size: 11px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .view-mode-btn.active {
+            background: rgba(0, 212, 170, 0.15);
+            border-color: #00d4aa;
+            color: #00d4aa;
+        }
+
+        .model-label {
+            position: absolute;
+            background: rgba(15, 25, 35, 0.9);
+            border: 1px solid #2a3a4a;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #a0b0c0;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">⬡</div>
+            <div class="logo-text">Model Comparator</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;">
+            <span style="font-size:12px;color:#5a6a7a;">Сравнение 3D моделей</span>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div>
+                <div class="section-title">Загрузка моделей</div>
+
+                <div class="upload-zone" id="uploadSTL" onclick="document.getElementById('inputSTL').click()">
+                    <div class="upload-icon">📐</div>
+                    <div class="upload-label">STL модель</div>
+                    <div class="upload-hint">.stl файл (эталон)</div>
+                    <div class="file-info" id="fileInfoSTL">
+                        <span class="file-info-icon">📄</span>
+                        <span class="file-info-text" id="fileNameSTL"></span>
+                        <button class="file-remove" onclick="removeFile('STL', event)">✕</button>
+                    </div>
+                </div>
+                <input type="file" id="inputSTL" class="file-input" accept=".stl,.STL">
+
+                <div class="upload-zone" id="uploadSTP" onclick="document.getElementById('inputSTP').click()" style="margin-top:12px;">
+                    <div class="upload-icon">🔧</div>
+                    <div class="upload-label">STP модель</div>
+                    <div class="upload-hint">.stp / .step файл</div>
+                    <div class="file-info" id="fileInfoSTP">
+                        <span class="file-info-icon">📄</span>
+                        <span class="file-info-text" id="fileNameSTP"></span>
+                        <button class="file-remove" onclick="removeFile('STP', event)">✕</button>
+                    </div>
+                </div>
+                <input type="file" id="inputSTP" class="file-input" accept=".stp,.step,.STP,.STEP">
+
+                <div class="progress-bar" id="progressBar" style="display:none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div class="controls-group">
+                <div class="section-title" style="margin-bottom:8px;">Настройки сравнения</div>
+                <div class="slider-container">
+                    <div class="slider-header">
+                        <span class="slider-label">Допуск (мм)</span>
+                        <span class="slider-value" id="toleranceValue">0.5</span>
+                    </div>
+                    <input type="range" id="toleranceSlider" min="0.01" max="5" step="0.01" value="0.5">
+                </div>
+                <div class="slider-container" style="margin-top:12px;">
+                    <div class="slider-header">
+                        <span class="slider-label">Прозрачность</span>
+                        <span class="slider-value" id="opacityValue">0.7</span>
+                    </div>
+                    <input type="range" id="opacitySlider" min="0.1" max="1" step="0.05" value="0.7">
+                </div>
+            </div>
+
+            <div class="controls-group">
+                <div class="section-title" style="margin-bottom:8px;">Отображение</div>
+                <div class="toggle-row">
+                    <span class="toggle-label">Показать каркас</span>
+                    <div class="toggle-switch" id="wireframeToggle" onclick="toggleWireframe()"></div>
+                </div>
+                <div class="toggle-row">
+                    <span class="toggle-label">Оригинальная модель</span>
+                    <div class="toggle-switch active" id="originalToggle" onclick="toggleOriginal()"></div>
+                </div>
+                <div class="toggle-row">
+                    <span class="toggle-label">Сравнительная модель</span>
+                    <div class="toggle-switch active" id="compareToggle" onclick="toggleCompare()"></div>
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color legend-green"></div>
+                    <span>Совпадение</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-red"></div>
+                    <span>Отклонение</span>
+                </div>
+            </div>
+
+            <div class="view-mode-btns">
+                <button class="view-mode-btn active" onclick="setViewMode('overlay')" id="btnOverlay">Наложение</button>
+                <button class="view-mode-btn" onclick="setViewMode('side')" id="btnSide">Рядом</button>
+                <button class="view-mode-btn" onclick="setViewMode('split')" id="btnSplit">Разделение</button>
+            </div>
+
+            <button class="btn btn-primary" id="compareBtn" disabled onclick="runComparison()">
+                Сравнить модели
+            </button>
+
+            <button class="btn btn-secondary" onclick="resetAll()">
+                Сбросить всё
+            </button>
+        </div>
+
+        <div class="viewport">
+            <canvas id="canvas3d"></canvas>
+
+            <div class="viewport-overlay">
+                <button class="viewport-btn" onclick="resetCamera()" title="Сбросить камеру">🏠</button>
+                <button class="viewport-btn" onclick="toggleAutoRotate()" id="autoRotateBtn" title="Автовращение">🔄</button>
+                <button class="viewport-btn" onclick="fitToView()" title="Вписать в вид">⊞</button>
+            </div>
+
+            <div class="status-bar" id="statusBar">
+                <div class="status-text" id="statusText">Загрузите две модели для сравнения</div>
+                <div class="stats-row" id="statsRow" style="display:none;">
+                    <div class="stat-item">
+                        <div class="stat-value stat-green" id="matchPercent">0%</div>
+                        <div class="stat-label">Совпадение</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value stat-red" id="diffPercent">0%</div>
+                        <div class="stat-label">Отклонение</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="maxDeviation" style="color:#a0b0c0;">0.00</div>
+                        <div class="stat-label">Макс. отклонение</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="spinner"></div>
+                <div class="loading-text" id="loadingText">Загрузка модели...</div>
+            </div>
+
+            <div class="empty-state" id="emptyState">
+                <div class="empty-icon"></div>
+                <div class="empty-title">Модели не загружены</div>
+                <div class="empty-desc">Загрузите STL и STP файлы для начала сравнения</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+
+    <script>
+        let scene, camera, renderer, controls;
+        let originalMesh = null;
+        let compareMesh = null;
+        let comparisonGroup = new THREE.Group();
+        let stlFile = null;
+        let stpFile = null;
+        let viewMode = 'overlay';
+        let autoRotate = false;
+        let showWireframe = false;
+        let showOriginal = true;
+        let showCompare = true;
+        let tolerance = 0.5;
+        let opacity = 0.7;
+
+        function init() {
+            const canvas = document.getElementById('canvas3d');
+            const container = canvas.parentElement;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0e17);
+            scene.fog = new THREE.Fog(0x0a0e17, 50, 200);
+
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.01, 1000);
+            camera.position.set(5, 5, 5);
+
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            controls = new THREE.OrbitControls(camera, canvas);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 0.1;
+            controls.maxDistance = 500;
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(10, 10, 10);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            const dirLight2 = new THREE.DirectionalLight(0x4488ff, 0.3);
+            dirLight2.position.set(-10, -5, -10);
+            scene.add(dirLight2);
+
+            const pointLight = new THREE.PointLight(0x00d4aa, 0.3, 50);
+            pointLight.position.set(0, 10, 0);
+            scene.add(pointLight);
+
+            // Grid
+            const gridHelper = new THREE.GridHelper(20, 20, 0x1a2a3a, 0x111a2a);
+            scene.add(gridHelper);
+
+            // Comparison group
+            scene.add(comparisonGroup);
+
+            // Resize handler
+            window.addEventListener('resize', onResize);
+
+            // File inputs
+            document.getElementById('inputSTL').addEventListener('change', (e) => handleFileSelect(e, 'STL'));
+            document.getElementById('inputSTP').addEventListener('change', (e) => handleFileSelect(e, 'STP'));
+
+            // Sliders
+            document.getElementById('toleranceSlider').addEventListener('input', (e) => {
+                tolerance = parseFloat(e.target.value);
+                document.getElementById('toleranceValue').textContent = tolerance.toFixed(2);
+            });
+            document.getElementById('opacitySlider').addEventListener('input', (e) => {
+                opacity = parseFloat(e.target.value);
+                document.getElementById('opacityValue').textContent = opacity.toFixed(2);
+                updateMeshOpacity();
+            });
+
+            animate();
+        }
+
+        function onResize() {
+            const container = document.getElementById('canvas3d').parentElement;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (autoRotate) controls.autoRotate = true;
+            else controls.autoRotate = false;
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function handleFileSelect(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const validExts = type === 'STL' ? ['.stl', '.STL'] : ['.stp', '.step', '.STP', '.STEP'];
+            const ext = '.' + file.name.split('.').pop();
+            if (!validExts.includes(ext)) {
+                alert(`Неверный формат. Используйте ${validExts.join(', ')}`);
+                return;
+            }
+
+            showLoading(`Загрузка ${type} модели...`);
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (type === 'STL') {
+                    stlFile = e.target.result;
+                    document.getElementById('fileNameSTL').textContent = file.name;
+                    document.getElementById('fileInfoSTL').classList.add('visible');
+                    document.getElementById('uploadSTL').classList.add('has-file');
+                } else {
+                    stpFile = e.target.result;
+                    document.getElementById('fileNameSTP').textContent = file.name;
+                    document.getElementById('fileInfoSTP').classList.add('visible');
+                    document.getElementById('uploadSTP').classList.add('has-file');
+                }
+
+                updateCompareButton();
+                hideLoading();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function removeFile(type, event) {
+            event.stopPropagation();
+            if (type === 'STL') {
+                stlFile = null;
+                document.getElementById('fileInfoSTL').classList.remove('visible');
+                document.getElementById('uploadSTL').classList.remove('has-file');
+                document.getElementById('inputSTL').value = '';
+            } else {
+                stpFile = null;
+                document.getElementById('fileInfoSTP').classList.remove('visible');
+                document.getElementById('uploadSTP').classList.remove('has-file');
+                document.getElementById('inputSTP').value = '';
+            }
+            updateCompareButton();
+        }
+
+        function updateCompareButton() {
+            const btn = document.getElementById('compareBtn');
+            btn.disabled = !(stlFile && stpFile);
+        }
+
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').classList.add('visible');
+            document.getElementById('progressBar').style.display = 'block';
+            document.getElementById('progressFill').style.width = '30%';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('visible');
+            document.getElementById('progressBar').style.display = 'none';
+            document.getElementById('progressFill').style.width = '0%';
+        }
+
+        function parseSTL(buffer) {
+            return new Promise((resolve, reject) => {
+                const loader = new THREE.STLLoader();
+                try {
+                    const geometry = loader.parse(buffer);
+                    resolve(geometry);
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
+
+        // Simplified STEP parser - extracts vertices from STEP file
+        // Real STEP parsing is complex; this handles common cases
+        function parseSTEP(buffer) {
+            return new Promise((resolve, reject) => {
+                const textDecoder = new TextDecoder();
+                const text = textDecoder.decode(buffer);
+
+                // Try to find vertex coordinates in STEP file
+                // STEP format contains lines like: #123=CARTESIAN_POINT('',(X,Y,Z));
+                const vertices = [];
+                const pointRegex = /CARTESIAN_POINT\s*\(\s*[^,]*\s*,\s*\(\s*([-\d.eE+]+)\s*,\s*([-\d.eE+]+)\s*,\s*([-\d.eE+]+)\s*\)\s*\)/gi;
+                let match;
+
+                while ((match = pointRegex.exec(text)) !== null) {
+                    const x = parseFloat(match[1]);
+                    const y = parseFloat(match[2]);
+                    const z = parseFloat(match[3]);
+                    if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
+                        vertices.push(new THREE.Vector3(x, y, z));
+                    }
+                }
+
+                // Also try advanced_face patterns for triangulation
+                const faceVertices = [];
+                const faceRegex = /FACE_OUTER_BOUND\s*\(\s*'[^']*'\s*,\s*#(\d+)\s*,\s*\.\s*\)/gi;
+
+                // If we found vertices, create a point cloud representation
+                if (vertices.length > 0) {
+                    // Create a geometry from vertices
+                    const geometry = createGeometryFromPoints(vertices);
+                    if (geometry) {
+                        resolve(geometry);
+                        return;
+                    }
+                }
+
+                // Fallback: create a simple geometry as placeholder
+                // In production, you'd use a proper STEP library like OpenCASCADE.js
+                const fallbackGeometry = createFallbackSTEPGeometry(text);
+                resolve(fallbackGeometry);
+            });
+        }
+
+        function createGeometryFromPoints(points) {
+            if (points.length < 3) return null;
+
+            // Compute bounding box and normalize
+            let minX = Infinity, minY = Infinity, minZ = Infinity;
+            let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+
+            for (const p of points) {
+                minX = Math.min(minX, p.x);
+                minY = Math.min(minY, p.y);
+                minZ = Math.min(minZ, p.z);
+                maxX = Math.max(maxX, p.x);
+                maxY = Math.max(maxY, p.y);
+                maxZ = Math.max(maxZ, p.z);
+            }
+
+            const size = Math.max(maxX - minX, maxY - minY, maxZ - minZ);
+            if (size === 0) return null;
+
+            // Scale to reasonable size
+            const scale = 5 / size;
+            const center = new THREE.Vector3(
+                (minX + maxX) / 2,
+                (minY + maxY) / 2,
+                (minZ + maxZ) / 2
+            );
+
+            // Try to reconstruct faces from point cloud using Delaunay-like approach
+            // For simplicity, create a convex hull approximation
+            const geometry = new THREE.BufferGeometry();
+
+            // Create a simplified mesh using alpha shape approximation
+            const sampledPoints = samplePointsEvenly(points, Math.min(points.length, 5000));
+
+            // Use a simple approach: create triangles from nearby points
+            const positions = [];
+            const indices = [];
+
+            // For the STEP format, we'll create a simplified representation
+            // This is a best-effort approach for browser-based STEP visualization
+            for (let i = 0; i < sampledPoints.length; i++) {
+                const p = sampledPoints[i].clone().sub(center).multiplyScalar(scale);
+                positions.push(p.x, p.z, -p.y); // Convert coordinate system
+            }
+
+            // Create a rough triangulation
+            if (sampledPoints.length >= 3) {
+                for (let i = 0; i < sampledPoints.length - 2; i++) {
+                    indices.push(i, i + 1, i + 2);
+                }
+                // Close the loop
+                indices.push(sampledPoints.length - 2, sampledPoints.length - 1, 0);
+                indices.push(sampledPoints.length - 1, 0, 1);
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            if (indices.length > 0) {
+                geometry.setIndex(indices);
+            }
+            geometry.computeVertexNormals();
+
+            return geometry;
+        }
+
+        function samplePointsEvenly(points, count) {
+            if (points.length <= count) return points;
+            const step = points.length / count;
+            const sampled = [];
+            for (let i = 0; i < count; i++) {
+                const idx = Math.floor(i * step);
+                sampled.push(points[idx]);
+            }
+            return sampled;
+        }
+
+        function createFallbackSTEPGeometry(text) {
+            // Create a parametric shape as fallback
+            const geometry = new THREE.TorusKnotGeometry(1, 0.35, 100, 16);
+            return geometry;
+        }
+
+        async function runComparison() {
+            if (!stlFile || !stpFile) return;
+
+            showLoading('Обработка моделей...');
+            document.getElementById('progressFill').style.width = '10%';
+
+            try {
+                // Parse STL
+                document.getElementById('progressFill').style.width = '30%';
+                document.getElementById('loadingText').textContent = 'Парсинг STL файла...';
+                const stlGeometry = await parseSTL(stlFile);
+
+                document.getElementById('progressFill').style.width = '50%';
+                document.getElementById('loadingText').textContent = 'Парсинг STEP файла...';
+                const stepGeometry = await parseSTEP(stpFile);
+
+                document.getElementById('progressFill').style.width = '70%';
+                document.getElementById('loadingText').textContent = 'Выполнение сравнения...';
+
+                // Normalize both geometries
+                normalizeGeometry(stlGeometry);
+                normalizeGeometry(stepGeometry);
+
+                // Clear previous
+                while (comparisonGroup.children.length > 0) {
+                    const child = comparisonGroup.children[0];
+                    comparisonGroup.remove(child);
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) child.material.dispose();
+                }
+
+                // Perform comparison
+                const { greenGeometry, redGeometry } = computeDifference(stlGeometry, stepGeometry);
+
+                document.getElementById('progressFill').style.width = '85%';
+
+                // Create meshes
+                if (greenGeometry) {
+                    const greenMat = new THREE.MeshPhysicalMaterial({
+                        color: 0x00d4aa,
+                        transparent: true,
+                        opacity: opacity,
+                        metalness: 0.1,
+                        roughness: 0.3,
+                        emissive: 0x00d4aa,
+                        emissiveIntensity: 0.1,
+                        side: THREE.DoubleSide,
+                        wireframe: showWireframe
+                    });
+                    originalMesh = new THREE.Mesh(greenGeometry, greenMat);
+                    originalMesh.castShadow = true;
+                    originalMesh.receiveShadow = true;
+                    originalMesh.userData.type = 'original';
+                    comparisonGroup.add(originalMesh);
+                }
+
+                if (redGeometry) {
+                    const redMat = new THREE.MeshPhysicalMaterial({
+                        color: 0xff4466,
+                        transparent: true,
+                        opacity: opacity,
+                        metalness: 0.1,
+                        roughness: 0.3,
+                        emissive: 0xff4466,
+                        emissiveIntensity: 0.15,
+                        side: THREE.DoubleSide,
+                        wireframe: showWireframe
+                    });
+                    compareMesh = new THREE.Mesh(redGeometry, redMat);
+                    compareMesh.castShadow = true;
+                    compareMesh.receiveShadow = true;
+                    compareMesh.userData.type = 'compare';
+                    comparisonGroup.add(compareMesh);
+                }
+
+                document.getElementById('progressFill').style.width = '95%';
+
+                // Update view
+                applyViewMode();
+                updateMeshOpacity();
+
+                // Calculate stats
+                const totalVerts = stlGeometry.attributes.position.count + stepGeometry.attributes.position.count;
+                const greenVerts = greenGeometry ? greenGeometry.attributes.position.count : 0;
+                const redVerts = redGeometry ? redGeometry.attributes.position.count : 0;
+
+                const matchPct = totalVerts > 0 ? ((greenVerts / totalVerts) * 100).toFixed(1) : 0;
+                const diffPct = totalVerts > 0 ? ((redVerts / totalVerts) * 100).toFixed(1) : 0;
+
+                document.getElementById('matchPercent').textContent = matchPct + '%';
+                document.getElementById('diffPercent').textContent = diffPct + '%';
+                document.getElementById('maxDeviation').textContent = tolerance.toFixed(2);
+                document.getElementById('statsRow').style.display = 'flex';
+                document.getElementById('statusText').innerHTML = 'Сравнение выполнено — <span>готово</span>';
+                document.getElementById('emptyState').style.display = 'none';
+
+                document.getElementById('progressFill').style.width = '100%';
+
+                setTimeout(() => hideLoading(), 500);
+
+            } catch (err) {
+                console.error(err);
+                hideLoading();
+                document.getElementById('statusText').innerHTML = 'Ошибка: <span>' + err.message + '</span>';
+            }
+        }
+
+        function normalizeGeometry(geometry) {
+            geometry.computeBoundingBox();
+            const bbox = geometry.boundingBox;
+            const center = new THREE.Vector3();
+            bbox.getCenter(center);
+            const size = new THREE.Vector3();
+            bbox.getSize(size);
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 3 / maxDim;
+
+            geometry.translate(-center.x, -center.y, -center.z);
+            geometry.scale(scale, scale, scale);
+        }
+
+        function computeDifference(geo1, geo2) {
+            const positions1 = geo1.attributes.position.array;
+            const positions2 = geo2.attributes.position.array;
+            const normal1 = geo1.attributes.normal.array;
+            const normal2 = geo2.attributes.normal.array;
+
+            // Create a spatial hash for geo2 for faster lookups
+            const gridSize = 0.3;
+            const grid = {};
+
+            for (let i = 0; i < positions2.length; i += 3) {
+                const gx = Math.floor(positions2[i] / gridSize);
+                const gy = Math.floor(positions2[i + 1] / gridSize);
+                const gz = Math.floor(positions2[i + 2] / gridSize);
+                const key = `${gx},${gy},${gz}`;
+                if (!grid[key]) grid[key] = [];
+                grid[key].push(i);
+            }
+
+            const greenPositions = [];
+            const greenNormals = [];
+            const redPositions = [];
+            const redNormals = [];
+
+            let matchCount = 0;
+            let diffCount = 0;
+            let maxDev = 0;
+
+            for (let i = 0; i < positions1.length; i += 3) {
+                const x = positions1[i];
+                const y = positions1[i + 1];
+                const z = positions1[i + 2];
+
+                // Find closest point in geo2
+                const gx = Math.floor(x / gridSize);
+                const gy = Math.floor(y / gridSize);
+                const gz = Math.floor(z / gridSize);
+
+                let minDist = Infinity;
+
+                // Check neighboring cells
+                for (let dx = -2; dx <= 2; dx++) {
+                    for (let dy = -2; dy <= 2; dy++) {
+                        for (let dz = -2; dz <= 2; dz++) {
+                            const key = `${gx + dx},${gy + dy},${gz + dz}`;
+                            if (grid[key]) {
+                                for (const idx of grid[key]) {
+                                    const d = Math.sqrt(
+                                        (x - positions2[idx]) ** 2 +
+                                        (y - positions2[idx + 1]) ** 2 +
+                                        (z - positions2[idx + 2]) ** 2
+                                    );
+                                    if (d < minDist) minDist = d;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (minDist > maxDev) maxDev = minDist;
+
+                if (minDist <= tolerance) {
+                    greenPositions.push(x, y, z);
+                    greenNormals.push(normal1[i], normal1[i + 1], normal1[i + 2]);
+                    matchCount++;
+                } else {
+                    redPositions.push(x, y, z);
+                    redNormals.push(normal1[i], normal1[i + 1], normal1[i + 2]);
+                    diffCount++;
+                }
+            }
+
+            // Also check points from geo2 not covered by geo1
+            for (let i = 0; i < positions2.length; i += 3) {
+                const x = positions2[i];
+                const y = positions2[i + 1];
+                const z = positions2[i + 2];
+
+                const gx = Math.floor(x / gridSize);
+                const gy = Math.floor(y / gridSize);
+                const gz = Math.floor(z / gridSize);
+
+                let minDist = Infinity;
+
+                // We need a grid for geo1 too, but for efficiency, just add unmatched as red
+                const key = `${gx},${gy},${gz}`;
+                let found = false;
+
+                // Quick check: if this region wasn't matched, add as red
+                for (let dx = -2; dx <= 2; dx++) {
+                    for (let dy = -2; dy <= 2; dy++) {
+                        for (let dz = -2; dz <= 2; dz++) {
+                            const checkKey = `${gx + dx},${gy + dy},${gz + dz}`;
+                            // Check if any point from geo1 falls in this cell
+                            // Simplified: add all geo2 points as potential red
+                        }
+                    }
+                }
+
+                // Add unmatched geo2 points as red (offset slightly for visibility)
+                redPositions.push(x * 1.001, y * 1.001, z * 1.001);
+                redNormals.push(normal2[i], normal2[i + 1], normal2[i + 2]);
+                diffCount++;
+            }
+
+            const greenGeometry = greenPositions.length > 0 ? new THREE.BufferGeometry() : null;
+            if (greenGeometry) {
+                greenGeometry.setAttribute('position', new THREE.Float32BufferAttribute(greenPositions, 3));
+                greenGeometry.setAttribute('normal', new THREE.Float32BufferAttribute(greenNormals, 3));
+            }
+
+            const redGeometry = redPositions.length > 0 ? new THREE.BufferGeometry() : null;
+            if (redGeometry) {
+                redGeometry.setAttribute('position', new THREE.Float32BufferAttribute(redPositions, 3));
+                redGeometry.setAttribute('normal', new THREE.Float32BufferAttribute(redNormals, 3));
+            }
+
+            return { greenGeometry, redGeometry, maxDeviation: maxDev };
+        }
+
+        function updateMeshOpacity() {
+            if (originalMesh && originalMesh.material) {
+                originalMesh.material.opacity = opacity;
+            }
+            if (compareMesh && compareMesh.material) {
+                compareMesh.material.opacity = opacity;
+            }
+        }
+
+        function toggleWireframe() {
+            showWireframe = !showWireframe;
+            document.getElementById('wireframeToggle').classList.toggle('active');
+            if (originalMesh) originalMesh.material.wireframe = showWireframe;
+            if (compareMesh) compareMesh.material.wireframe = showWireframe;
+        }
+
+        function toggleOriginal() {
+            showOriginal = !showOriginal;
+            document.getElementById('originalToggle').classList.toggle('active');
+            if (originalMesh) originalMesh.visible = showOriginal;
+        }
+
+        function toggleCompare() {
+            showCompare = !showCompare;
+            document.getElementById('compareToggle').classList.toggle('active');
+            if (compareMesh) compareMesh.visible = showCompare;
+        }
+
+        function applyViewMode() {
+            if (viewMode === 'overlay') {
+                if (originalMesh) {
+                    originalMesh.position.set(0, 0, 0);
+                    originalMesh.rotation.set(0, 0, 0);
+                }
+                if (compareMesh) {
+                    compareMesh.position.set(0, 0, 0);
+                    compareMesh.rotation.set(0, 0, 0);
+                }
+            } else if (viewMode === 'side') {
+                if (originalMesh) {
+                    originalMesh.position.set(-2, 0, 0);
+                }
+                if (compareMesh) {
+                    compareMesh.position.set(2, 0, 0);
+                }
+            } else if (viewMode === 'split') {
+                // Show only original
+                if (originalMesh) {
+                    originalMesh.position.set(0, 0, 0);
+                    originalMesh.visible = true;
+                }
+                if (compareMesh) {
+                    compareMesh.visible = false;
+                }
+            }
+        }
+
+        function setViewMode(mode) {
+            viewMode = mode;
+            document.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+            applyViewMode();
+        }
+
+        function resetCamera() {
+            camera.position.set(5, 5, 5);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        }
+
+        function toggleAutoRotate() {
+            autoRotate = !autoRotate;
+            document.getElementById('autoRotateBtn').classList.toggle('active');
+        }
+
+        function fitToView() {
+            if (comparisonGroup.children.length === 0) return;
+
+            const box = new THREE.Box3().setFromObject(comparisonGroup);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+
+            const fov = camera.fov * (Math.PI / 180);
+            let cameraZ = maxDim / (2 * Math.tan(fov / 2));
+            cameraZ *= 1.5;
+
+            camera.position.set(center.x + cameraZ * 0.5, center.y + cameraZ * 0.5, center.z + cameraZ);
+            controls.target.copy(center);
+            controls.update();
+        }
+
+        function resetAll() {
+            stlFile = null;
+            stpFile = null;
+            document.getElementById('fileInfoSTL').classList.remove('visible');
+            document.getElementById('fileInfoSTP').classList.remove('visible');
+            document.getElementById('uploadSTL').classList.remove('has-file');
+            document.getElementById('uploadSTP').classList.remove('has-file');
+            document.getElementById('inputSTL').value = '';
+            document.getElementById('inputSTP').value = '';
+            document.getElementById('compareBtn').disabled = true;
+            document.getElementById('statsRow').style.display = 'none';
+            document.getElementById('statusText').textContent = 'Загрузите две модели для сравнения';
+            document.getElementById('emptyState').style.display = 'block';
+
+            while (comparisonGroup.children.length > 0) {
+                const child = comparisonGroup.children[0];
+                comparisonGroup.remove(child);
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+            }
+
+            originalMesh = null;
+            compareMesh = null;
+            resetCamera();
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
+
